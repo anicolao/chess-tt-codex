@@ -62,13 +62,15 @@ No keyboard shortcuts are required for MVP.
 ### Platform
 
 - SvelteKit with Svelte 5
+- Redux for game state and UI state
+- Event-sourced reducers as the authoritative state model
 - `@sveltejs/adapter-static`
 - GitHub Pages deployment with `PUBLIC_BASE_PATH`
 - PWA shell for installability and offline-friendly local play
 
 ### State Model
 
-Use a deterministic central store with append-only game events.
+Use a deterministic Redux store with append-only events for both game state and UI state.
 
 Core benefits:
 
@@ -77,7 +79,7 @@ Core benefits:
 - deterministic tests,
 - clear separation between chess rules and UI concerns.
 
-Suggested core state:
+Suggested core Redux slices:
 
 ```ts
 type GameState = {
@@ -92,6 +94,13 @@ type GameState = {
   capturedByBlack: PieceType[];
   status: "playing" | "check" | "checkmate" | "stalemate" | "promotion";
   pendingPromotion: PromotionState | null;
+};
+
+type UiState = {
+  screen: "lobby" | "game";
+  activeModal: "none" | "promotion" | "reset-confirm";
+  announcements: string[];
+  lastInteraction: "touch" | "mouse";
 };
 ```
 
@@ -113,7 +122,10 @@ src/lib/game/
   model/        # Types, board coordinates, piece records
   notation/     # Move log formatting
 src/lib/store/
-  game-store    # Deterministic event/state reducer
+  game/         # Redux slice + selectors for game state
+  ui/           # Redux slice + selectors for UI state
+  events/       # Shared event definitions and replay helpers
+  store.ts      # Root Redux store
 src/lib/ui/
   board/
   overlays/
@@ -148,8 +160,10 @@ Testing policy should mirror the strongest constraints from `food` and `chess-cl
 ### Non-Negotiable Rules
 
 - Playwright E2E tests are the source of truth for user-facing correctness.
+- Vitest unit tests are required for reducers, rules, and other pure logic.
 - Screenshot comparisons use zero-pixel tolerance only.
 - Tests must run with deterministic rendering settings.
+- Timeouts greater than `2000ms` are forbidden.
 - `waitForTimeout` and similar arbitrary waits are banned.
 - Every user story added to MVP must ship with an E2E scenario.
 - `check` must fail on warnings.
@@ -159,6 +173,8 @@ Testing policy should mirror the strongest constraints from `food` and `chess-cl
 - `npm run check`
   - `svelte-kit sync`
   - `svelte-check --fail-on-warnings`
+- `npm run test:unit`
+  - Vitest for reducers, rules, and policy checks
 - `npm run test:e2e`
   - Playwright on Chromium
   - fixed viewport
@@ -167,8 +183,10 @@ Testing policy should mirror the strongest constraints from `food` and `chess-cl
   - software rendering flags
 - local git hook
   - verify zero-tolerance screenshot policy
-  - run `check`
-  - run `test:e2e`
+  - ban `waitForTimeout`
+  - ban test timeouts above `2000ms`
+  - pre-commit runs unit tests
+  - pre-push runs the full suite
 
 ### E2E Structure
 
@@ -196,12 +214,16 @@ The repo should eventually include three required GitHub Actions workflows:
 - `check.yml`
   - install dependencies
   - run `npm ci`
+  - run `npm run verify:policy`
   - run `npm run check`
+  - run `npm run test:unit`
 - `e2e.yml`
   - install Playwright Chromium
+  - run `npm run verify:policy`
   - run `npm run test:e2e`
   - upload Playwright artifacts on failure
 - `deploy.yml`
+  - determine GitHub Pages base path from branch or PR number
   - build static site
   - deploy to GitHub Pages
   - create PR preview paths and comment preview URLs

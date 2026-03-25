@@ -1,0 +1,34 @@
+{
+  "name": "chess-tt-codex",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --port 5174 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "husky",
+    "check": "svelte-kit sync && svelte-check --fail-on-warnings --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --fail-on-warnings --tsconfig ./tsconfig.json --watch",
+    "test:unit": "svelte-kit sync && vitest run",
+    "test:e2e": "playwright test --workers=1",
+    "verify:policy": "node scripts/verify-testing-policy.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@sveltejs/adapter-static": "^3.0.10",
+    "@sveltejs/kit": "^2.49.1",
+    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@types/node": "^25.0.6",
+    "husky": "^9.1.7",
+    "svelte": "^5.45.6",
+    "svelte-check": "^4.3.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.6",
+    "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.11.2",
+    "redux": "^5.0.1"
+  }
+}

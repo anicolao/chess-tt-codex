@@ -1,0 +1,9 @@
+{
+  "name": "Chess TT Codex",
+  "short_name": "Chess TT",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#10141a",
+  "theme_color": "#10141a",
+  "description": "Scaffold for a tabletop chess PWA."
+}
